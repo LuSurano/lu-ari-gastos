@@ -1,1 +1,688 @@
 
+<title>Lu & Ari — Gastos</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+:root {
+  --bg:       #0f1623;
+  --bg2:      #1a2235;
+  --bg3:      #232e44;
+  --border:   #2e3d58;
+  --fg:       #eef2f8;
+  --fg2:      #8fa3c0;
+  --fg3:      #4e6180;
+  --accent:   #4fc8a0;
+  --accent2:  #2e9e7c;
+  --lu:       #a78bfa;
+  --ari:      #60a5fa;
+  --warn:     #f59e0b;
+  --danger:   #f87171;
+  --ok:       #4fc8a0;
+  --radius:   14px;
+  --radius-sm:8px;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:     #f4f7fb; --bg2: #ffffff; --bg3: #eaf0f8;
+    --border: #d1dce9; --fg:  #1a2235; --fg2: #4e6180; --fg3: #8fa3c0;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg:     #f4f7fb; --bg2: #ffffff; --bg3: #eaf0f8;
+  --border: #d1dce9; --fg:  #1a2235; --fg2: #4e6180; --fg3: #8fa3c0;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-weight: 300;
+  font-size: 15px;
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  display: flex; flex-direction: column;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--bg); z-index: 30;
+}
+.topbar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0; gap: 12px;
+}
+.topbar-title { font-size: 16px; font-weight: 600; letter-spacing: 0.01em; }
+.topbar-title span { color: var(--accent); }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.sync-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--fg3); transition: background 0.3s;
+}
+.sync-dot.ok { background: var(--ok); }
+.sync-dot.syncing { background: var(--warn); animation: pulse 1s infinite; }
+.sync-dot.error { background: var(--danger); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.topbar-month { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--fg2); }
+.topbar-month button {
+  background: var(--bg3); border: none; color: var(--fg);
+  width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+  font-size: 14px; display: flex; align-items: center; justify-content: center;
+}
+.bottomnav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+  background: var(--bg2); border-top: 1px solid var(--border);
+  display: flex; padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.nav-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 10px 0; background: none; border: none; color: var(--fg3);
+  font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 500;
+  letter-spacing: 0.03em; cursor: pointer; text-transform: uppercase; transition: color 0.15s;
+}
+.nav-btn.active { color: var(--accent); }
+.nav-btn svg { width: 20px; height: 20px; }
+.page { display: none; padding-top: 16px; padding-bottom: 8px; }
+.page.active { display: block; }
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+.card-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg2); margin-bottom: 14px; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.tile { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.tile-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg2); margin-bottom: 6px; }
+.tile-value { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.tile-sub { font-size: 11px; color: var(--fg2); margin-top: 3px; }
+.split-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.split-side { flex: 1; background: var(--bg3); border-radius: var(--radius-sm); padding: 12px 14px; }
+.split-side.lu { border-top: 3px solid var(--lu); }
+.split-side.ari { border-top: 3px solid var(--ari); }
+.split-name { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.split-name.lu { color: var(--lu); }
+.split-name.ari { color: var(--ari); }
+.split-pct { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.split-amt { font-size: 12px; color: var(--fg2); margin-top: 2px; font-variant-numeric: tabular-nums; }
+.prog-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.prog-label { font-size: 12px; font-weight: 500; min-width: 110px; color: var(--fg2); }
+.prog-track { flex: 1; height: 6px; background: var(--bg3); border-radius: 99px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.4s ease; }
+.prog-pct { font-size: 12px; font-weight: 600; min-width: 70px; text-align: right; font-variant-numeric: tabular-nums; }
+.chart-wrap { position: relative; height: 220px; width: 100%; }
+.tx-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  background: var(--bg3); margin-bottom: 2px;
+}
+.tx-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.tx-info { flex: 1; min-width: 0; }
+.tx-desc { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tx-meta { font-size: 11px; color: var(--fg2); margin-top: 1px; }
+.tx-amount { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tx-who { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; padding: 2px 6px; border-radius: 99px; text-transform: uppercase; }
+.tx-who.lu { background: color-mix(in srgb, var(--lu) 20%, transparent); color: var(--lu); }
+.tx-who.ari { background: color-mix(in srgb, var(--ari) 20%, transparent); color: var(--ari); }
+.tx-who.comun { background: color-mix(in srgb, var(--accent) 20%, transparent); color: var(--accent); }
+.tx-delete { background: none; border: none; color: var(--fg3); cursor: pointer; padding: 4px; border-radius: 4px; font-size: 14px; line-height: 1; flex-shrink: 0; }
+.tx-delete:hover { color: var(--danger); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-full { grid-column: 1 / -1; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg2); }
+.form-input, .form-select {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--fg); font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 400;
+  padding: 10px 12px; outline: none; transition: border-color 0.15s; width: 100%;
+}
+.form-input:focus, .form-select:focus { border-color: var(--accent); }
+.form-select option { background: var(--bg2); }
+.btn-primary {
+  width: 100%; background: var(--accent); color: #0f1623; border: none;
+  border-radius: var(--radius-sm); font-family: 'Montserrat', sans-serif;
+  font-size: 14px; font-weight: 700; padding: 13px; cursor: pointer;
+  letter-spacing: 0.03em; margin-top: 4px; transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--accent2); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary {
+  background: var(--bg3); color: var(--fg); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); font-family: 'Montserrat', sans-serif;
+  font-size: 13px; font-weight: 500; padding: 9px 16px; cursor: pointer; transition: background 0.15s;
+}
+.btn-secondary:hover { background: var(--border); }
+.income-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.income-label { font-size: 13px; font-weight: 500; min-width: 60px; }
+.income-label.lu { color: var(--lu); }
+.income-label.ari { color: var(--ari); }
+.empty-state { text-align: center; padding: 32px 16px; color: var(--fg3); }
+.empty-state svg { width: 40px; height: 40px; margin-bottom: 12px; opacity: 0.4; }
+.empty-state p { font-size: 13px; line-height: 1.6; }
+.loading-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: var(--bg); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 16px;
+}
+.spinner {
+  width: 36px; height: 36px; border: 3px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 13px; color: var(--fg2); font-weight: 500; }
+</style>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Conectando…</div>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-title">Lu <span>&</span> Ari</div>
+  <div class="topbar-right">
+    <div class="sync-dot" id="sync-dot" title="Estado de sincronización"></div>
+    <div class="topbar-month">
+      <button id="prevMonth">‹</button>
+      <span id="monthLabel">—</span>
+      <button id="nextMonth">›</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGES -->
+<div class="page active" id="page-dashboard">
+  <div class="tiles">
+    <div class="tile">
+      <div class="tile-label">Total gastado</div>
+      <div class="tile-value" id="dash-total">$0</div>
+      <div class="tile-sub" id="dash-txcount">0 gastos</div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">Ingresos</div>
+      <div class="tile-value" id="dash-ingresos">—</div>
+      <div class="tile-sub">del mes</div>
+    </div>
+  </div>
+  <div class="split-row">
+    <div class="split-side lu">
+      <div class="split-name lu">Lu</div>
+      <div class="split-pct" id="lu-pct">—%</div>
+      <div class="split-amt" id="lu-amt">$0</div>
+    </div>
+    <div class="split-side ari">
+      <div class="split-name ari">Ari</div>
+      <div class="split-pct" id="ari-pct">—%</div>
+      <div class="split-amt" id="ari-amt">$0</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Por categoría</div>
+    <div id="cat-breakdown"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Últimos 6 meses</div>
+    <div class="chart-wrap"><canvas id="chartBar"></canvas></div>
+  </div>
+</div>
+
+<div class="page" id="page-add">
+  <div class="card">
+    <div class="card-title">Ingresos del mes</div>
+    <div class="income-row">
+      <span class="income-label lu">Lu</span>
+      <input class="form-input" type="number" id="inp-ingreso-lu" placeholder="0" min="0">
+    </div>
+    <div class="income-row">
+      <span class="income-label ari">Ari</span>
+      <input class="form-input" type="number" id="inp-ingreso-ari" placeholder="0" min="0">
+    </div>
+    <button class="btn-secondary" style="width:100%;margin-top:6px" id="btn-save-ingresos">Guardar ingresos</button>
+  </div>
+  <div class="card">
+    <div class="card-title">Nuevo gasto</div>
+    <form id="form-gasto">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input class="form-input" type="date" id="inp-fecha" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Quién</label>
+          <select class="form-select" id="inp-quien" required>
+            <option value="Comun">Común</option>
+            <option value="Lu">Lu</option>
+            <option value="Ari">Ari</option>
+          </select>
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">Descripción</label>
+          <input class="form-input" type="text" id="inp-desc" placeholder="ej: Alquiler, Super…" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monto $</label>
+          <input class="form-input" type="number" id="inp-monto" placeholder="0" min="0" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Categoría</label>
+          <select class="form-select" id="inp-cat" required>
+            <option value="Servicios">Servicios</option>
+            <option value="Casa">Casa</option>
+            <option value="Consumo">Consumo</option>
+            <option value="Delivery">Delivery</option>
+            <option value="Ocio">Ocio</option>
+            <option value="Vacaciones">Vacaciones</option>
+            <option value="Caprichos">Caprichos</option>
+            <option value="Imprevistos">Imprevistos</option>
+          </select>
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">Nota <span style="font-weight:300;text-transform:none">(opcional)</span></label>
+          <input class="form-input" type="text" id="inp-nota" placeholder="ej: 3 de 12 cuotas">
+        </div>
+      </div>
+      <button class="btn-primary" type="submit" id="btn-submit">Agregar gasto</button>
+    </form>
+  </div>
+</div>
+
+<div class="page" id="page-history">
+  <div id="history-list"></div>
+</div>
+
+<div class="page" id="page-settings">
+  <div class="card">
+    <div class="card-title">Sincronización</div>
+    <p style="font-size:13px;color:var(--fg2);line-height:1.7;margin-bottom:12px">
+      Los datos se sincronizan en tiempo real entre todos los dispositivos vía Firebase. El punto verde en el encabezado indica que la conexión está activa.
+    </p>
+    <div id="sync-status-text" style="font-size:12px;color:var(--fg3)">Conectando…</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Acerca de</div>
+    <p style="font-size:13px;color:var(--fg2);line-height:1.7">
+      Lu & Ari Gastos 2027<br>
+      Gastos compartidos con split proporcional según ingresos del mes.<br>
+      Sin inversiones — eso va en la app personal de Lu.
+    </p>
+  </div>
+  <div class="card">
+    <div class="card-title" style="color:var(--danger)">Zona de peligro</div>
+    <button class="btn-secondary" style="width:100%;color:var(--danger);border-color:var(--danger)" id="btn-clear">
+      Borrar todos los gastos del mes actual
+    </button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottomnav">
+  <button class="nav-btn active" data-page="dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+      <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+    </svg>Resumen
+  </button>
+  <button class="nav-btn" data-page="add">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+    </svg>Cargar
+  </button>
+  <button class="nav-btn" data-page="history">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="12 8 12 12 14 14"/><circle cx="12" cy="12" r="9"/>
+    </svg>Historial
+  </button>
+  <button class="nav-btn" data-page="settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>Ajustes
+  </button>
+</nav>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+// ── FIREBASE CONFIG ──
+const firebaseConfig = {
+  apiKey: "AIzaSyDy72KhfCLc6M4nMNGLEM5YeaMWuz6jBTE",
+  authDomain: "lu-ari-gastos.firebaseapp.com",
+  projectId: "lu-ari-gastos",
+  storageBucket: "lu-ari-gastos.firebasestorage.app",
+  messagingSenderId: "428679861938",
+  appId: "1:428679861938:web:927980adfdf161774e5bab"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ── CONSTANTS ──
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+               'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MESES_CORTO = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+const CAT_COLORS = {
+  'Servicios':'#60a5fa','Casa':'#a78bfa','Consumo':'#4fc8a0',
+  'Delivery':'#f59e0b','Ocio':'#f472b6','Vacaciones':'#34d399',
+  'Caprichos':'#fb923c','Imprevistos':'#f87171',
+};
+
+// ── STATE ──
+let currentYear  = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
+let barChart     = null;
+let unsubGastos  = null;
+let unsubIngresos = null;
+let cachedGastos  = [];
+let cachedIngresos = { lu: 0, ari: 0 };
+
+// ── MONTH HELPERS ──
+function monthKey() { return `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`; }
+
+function updateMonthLabel() {
+  document.getElementById('monthLabel').textContent = MESES[currentMonth] + ' ' + currentYear;
+}
+document.getElementById('prevMonth').addEventListener('click', () => {
+  currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  updateMonthLabel(); subscribeMonth();
+});
+document.getElementById('nextMonth').addEventListener('click', () => {
+  currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  updateMonthLabel(); subscribeMonth();
+});
+
+// ── SYNC DOT ──
+function setSyncState(state) {
+  const dot = document.getElementById('sync-dot');
+  dot.className = 'sync-dot ' + state;
+  const txt = document.getElementById('sync-status-text');
+  if (txt) txt.textContent = state === 'ok' ? 'Conectado — datos en tiempo real' :
+                              state === 'syncing' ? 'Sincronizando…' : 'Error de conexión';
+}
+
+// ── FIRESTORE LISTENERS ──
+function subscribeMonth() {
+  if (unsubGastos)   { unsubGastos();   unsubGastos = null; }
+  if (unsubIngresos) { unsubIngresos(); unsubIngresos = null; }
+
+  setSyncState('syncing');
+  const mk = monthKey();
+
+  // Gastos
+  unsubGastos = db.collection('meses').doc(mk).collection('gastos')
+    .orderBy('fecha', 'desc')
+    .onSnapshot(snap => {
+      cachedGastos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setSyncState('ok');
+      renderAll();
+    }, err => {
+      console.error(err);
+      setSyncState('error');
+    });
+
+  // Ingresos
+  unsubIngresos = db.collection('meses').doc(mk)
+    .onSnapshot(snap => {
+      const d = snap.data();
+      cachedIngresos = d ? { lu: d.lu || 0, ari: d.ari || 0 } : { lu: 0, ari: 0 };
+      renderAll();
+    }, () => {});
+}
+
+// ── FORMAT ──
+function fmt(n) { return '$' + Math.round(n).toLocaleString('es-AR'); }
+function pct(n) { return Math.round(n) + '%'; }
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── SPLIT ──
+function calcSplit(ing) {
+  const total = (ing.lu||0) + (ing.ari||0);
+  if (!total) return { luPct: 50, ariPct: 50 };
+  return { luPct: ing.lu/total*100, ariPct: ing.ari/total*100 };
+}
+
+// ── RENDER DASHBOARD ──
+function renderDashboard() {
+  const gastos   = cachedGastos;
+  const ingresos = cachedIngresos;
+  const split    = calcSplit(ingresos);
+
+  const totalComun = gastos.filter(g=>g.quien==='Comun').reduce((s,g)=>s+g.monto,0);
+  const totalLu    = gastos.filter(g=>g.quien==='Lu').reduce((s,g)=>s+g.monto,0);
+  const totalAri   = gastos.filter(g=>g.quien==='Ari').reduce((s,g)=>s+g.monto,0);
+  const luShare    = totalComun * split.luPct/100 + totalLu;
+  const ariShare   = totalComun * split.ariPct/100 + totalAri;
+
+  document.getElementById('dash-total').textContent = fmt(totalComun+totalLu+totalAri);
+  document.getElementById('dash-txcount').textContent = gastos.length + ' gasto' + (gastos.length!==1?'s':'');
+  const ingresoTotal = (ingresos.lu||0)+(ingresos.ari||0);
+  document.getElementById('dash-ingresos').textContent = ingresoTotal > 0 ? fmt(ingresoTotal) : '—';
+  document.getElementById('lu-pct').textContent  = pct(split.luPct);
+  document.getElementById('ari-pct').textContent = pct(split.ariPct);
+  document.getElementById('lu-amt').textContent  = fmt(luShare);
+  document.getElementById('ari-amt').textContent = fmt(ariShare);
+
+  // Categories
+  const bycat = {};
+  gastos.forEach(g => { bycat[g.cat] = (bycat[g.cat]||0) + g.monto; });
+  const sorted = Object.entries(bycat).sort((a,b)=>b[1]-a[1]);
+  const totalForPct = Object.values(bycat).reduce((s,v)=>s+v,0) || 1;
+  const catEl = document.getElementById('cat-breakdown');
+  catEl.innerHTML = sorted.length === 0
+    ? '<p style="font-size:13px;color:var(--fg3);text-align:center;padding:8px 0">Sin gastos este mes</p>'
+    : sorted.map(([cat,val]) => `
+        <div class="prog-row">
+          <div class="prog-label" style="color:${CAT_COLORS[cat]||'var(--fg2)'}">${cat}</div>
+          <div class="prog-track">
+            <div class="prog-fill" style="width:${(val/totalForPct*100).toFixed(1)}%;background:${CAT_COLORS[cat]||'var(--accent)'}"></div>
+          </div>
+          <div class="prog-pct">${fmt(val)}</div>
+        </div>`).join('');
+
+  renderBarChart();
+}
+
+// ── BAR CHART (last 6 months from Firestore) ──
+async function renderBarChart() {
+  const labels = [], luData = [], ariData = [];
+  const reads = [];
+  for (let i = 5; i >= 0; i--) {
+    let m = currentMonth - i, y = currentYear;
+    while (m < 0) { m += 12; y--; }
+    labels.push(MESES_CORTO[m]);
+    reads.push({ mk: `${y}-${String(m+1).padStart(2,'0')}`, m, y });
+  }
+  // fetch all 6 months in parallel
+  const results = await Promise.all(reads.map(async ({mk}) => {
+    try {
+      const [gSnap, iSnap] = await Promise.all([
+        db.collection('meses').doc(mk).collection('gastos').get(),
+        db.collection('meses').doc(mk).get(),
+      ]);
+      const ing = iSnap.exists ? { lu: iSnap.data().lu||0, ari: iSnap.data().ari||0 } : { lu:0, ari:0 };
+      const sp  = calcSplit(ing);
+      const gs  = gSnap.docs.map(d=>d.data());
+      const comun = gs.filter(g=>g.quien==='Comun').reduce((s,g)=>s+g.monto,0);
+      return {
+        lu:  Math.round(comun*sp.luPct/100  + gs.filter(g=>g.quien==='Lu').reduce((s,g)=>s+g.monto,0)),
+        ari: Math.round(comun*sp.ariPct/100 + gs.filter(g=>g.quien==='Ari').reduce((s,g)=>s+g.monto,0)),
+      };
+    } catch { return { lu:0, ari:0 }; }
+  }));
+  results.forEach(r => { luData.push(r.lu); ariData.push(r.ari); });
+
+  const ctx = document.getElementById('chartBar').getContext('2d');
+  if (barChart) barChart.destroy();
+  const fg = getComputedStyle(document.documentElement).getPropertyValue('--fg2').trim();
+  const br = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
+  barChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label:'Lu',  data:luData,  backgroundColor:'rgba(167,139,250,0.75)', borderRadius:4, borderSkipped:false },
+        { label:'Ari', data:ariData, backgroundColor:'rgba(96,165,250,0.75)',  borderRadius:4, borderSkipped:false },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color:fg, font:{family:'Montserrat',size:11,weight:'500'} } },
+        tooltip: { callbacks: { label: c => ' '+c.dataset.label+': '+fmt(c.parsed.y) } }
+      },
+      scales: {
+        x: { stacked:true, ticks:{color:fg,font:{family:'Montserrat',size:11}}, grid:{color:br} },
+        y: { stacked:true, ticks:{color:fg,font:{family:'Montserrat',size:11},callback:v=>'$'+(v/1000).toFixed(0)+'k'}, grid:{color:br} }
+      }
+    }
+  });
+}
+
+// ── RENDER HISTORY ──
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  const gastos = cachedGastos;
+  if (gastos.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      <p>No hay gastos cargados<br>este mes todavía.</p></div>`;
+    return;
+  }
+  el.innerHTML = gastos.map(g => `
+    <div class="tx-item">
+      <div class="tx-dot" style="background:${CAT_COLORS[g.cat]||'var(--fg3)'}"></div>
+      <div class="tx-info">
+        <div class="tx-desc">${escHtml(g.desc)}</div>
+        <div class="tx-meta">${g.fecha} · ${escHtml(g.cat)}${g.nota?' · '+escHtml(g.nota):''}</div>
+      </div>
+      <span class="tx-who ${(g.quien||'').toLowerCase()}">${g.quien}</span>
+      <div class="tx-amount">${fmt(g.monto)}</div>
+      <button class="tx-delete" data-id="${g.id}" title="Eliminar">✕</button>
+    </div>`).join('');
+
+  el.querySelectorAll('.tx-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      try {
+        await db.collection('meses').doc(monthKey()).collection('gastos').doc(id).delete();
+        showToast('Gasto eliminado');
+      } catch(e) { showToast('Error al eliminar'); }
+    });
+  });
+}
+
+// ── RENDER ADD FORM ──
+function renderAddForm() {
+  document.getElementById('inp-ingreso-lu').value  = cachedIngresos.lu  || '';
+  document.getElementById('inp-ingreso-ari').value = cachedIngresos.ari || '';
+}
+
+// ── SAVE INCOMES ──
+document.getElementById('btn-save-ingresos').addEventListener('click', async () => {
+  const lu  = parseFloat(document.getElementById('inp-ingreso-lu').value)  || 0;
+  const ari = parseFloat(document.getElementById('inp-ingreso-ari').value) || 0;
+  try {
+    await db.collection('meses').doc(monthKey()).set({ lu, ari }, { merge: true });
+    showToast('Ingresos guardados ✓');
+  } catch(e) { showToast('Error al guardar'); }
+});
+
+// ── FORM SUBMIT ──
+document.getElementById('inp-fecha').value = new Date().toISOString().slice(0,10);
+document.getElementById('form-gasto').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  const gasto = {
+    fecha: document.getElementById('inp-fecha').value,
+    quien: document.getElementById('inp-quien').value,
+    desc:  document.getElementById('inp-desc').value.trim(),
+    monto: parseFloat(document.getElementById('inp-monto').value) || 0,
+    cat:   document.getElementById('inp-cat').value,
+    nota:  document.getElementById('inp-nota').value.trim(),
+    ts:    firebase.firestore.FieldValue.serverTimestamp(),
+  };
+  if (!gasto.desc || gasto.monto <= 0) { btn.disabled = false; return; }
+  try {
+    await db.collection('meses').doc(monthKey()).collection('gastos').add(gasto);
+    document.getElementById('inp-desc').value  = '';
+    document.getElementById('inp-monto').value = '';
+    document.getElementById('inp-nota').value  = '';
+    showToast('Gasto agregado ✓');
+  } catch(e) { showToast('Error al guardar'); }
+  btn.disabled = false;
+});
+
+// ── CLEAR MONTH ──
+document.getElementById('btn-clear').addEventListener('click', async () => {
+  if (!confirm('¿Borrar todos los gastos de ' + MESES[currentMonth] + '?')) return;
+  const snap = await db.collection('meses').doc(monthKey()).collection('gastos').get();
+  const batch = db.batch();
+  snap.docs.forEach(d => batch.delete(d.ref));
+  await batch.commit();
+  showToast('Mes borrado');
+});
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = Object.assign(document.createElement('div'), { textContent: msg });
+  Object.assign(t.style, {
+    position:'fixed', bottom:'calc(80px + env(safe-area-inset-bottom,0px))',
+    left:'50%', transform:'translateX(-50%)',
+    background:'var(--accent)', color:'#0f1623',
+    fontFamily:'Montserrat,sans-serif', fontSize:'13px', fontWeight:'600',
+    padding:'10px 20px', borderRadius:'99px', zIndex:'100', pointerEvents:'none',
+    animation:'fadeup .25s ease',
+  });
+  document.head.insertAdjacentHTML('beforeend','<style>@keyframes fadeup{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}</style>');
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2200);
+}
+
+// ── NAV ──
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-'+btn.dataset.page).classList.add('active');
+    if (btn.dataset.page === 'add') renderAddForm();
+    if (btn.dataset.page === 'history') renderHistory();
+  });
+});
+
+// ── RENDER ALL ──
+function renderAll() {
+  renderDashboard();
+  if (document.getElementById('page-history').classList.contains('active')) renderHistory();
+  if (document.getElementById('page-add').classList.contains('active')) renderAddForm();
+}
+
+// ── INIT ──
+updateMonthLabel();
+subscribeMonth();
+// Hide loading once first data arrives (max 4s)
+setTimeout(() => {
+  document.getElementById('loading').style.display = 'none';
+}, 500);
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    document.getElementById('loading').style.display = 'none';
+  }, 500);
+});
+// Fallback
+setTimeout(() => {
+  document.getElementById('loading').style.display = 'none';
+}, 4000);
+</script>
