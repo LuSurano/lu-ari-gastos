@@ -161,15 +161,34 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .progress-bar{height:6px;background:var(--bg3);border-radius:99px;overflow:hidden;margin-top:6px}
 .progress-fill{height:100%;border-radius:99px;transition:width .4s}
 
-/* ── DESKTOP MODE ── */
+/* ── MODO COMPACTO (celular, default) vs MODO 2 COL ──
+   La clase se pone en <body>, afecta toda la app         */
+
+/* COMPACTO: 1 columna, campos grandes — fácil de tipear */
+body.compact-mode .form-grid{grid-template-columns:1fr !important}
+body.compact-mode .form-grid .form-group.full{grid-column:1/-1 !important}
+body.compact-mode .div-selector{grid-template-columns:1fr 1fr !important}
+body.compact-mode .tiles{grid-template-columns:1fr 1fr}
+body.compact-mode .split-row{flex-direction:column}
+
+/* 2 COL: campos más chicos lado a lado — más info en pantalla */
+body:not(.compact-mode) .form-grid{grid-template-columns:1fr 1fr !important}
+body:not(.compact-mode) .form-grid .form-group.full{grid-column:1/-1 !important}
+body:not(.compact-mode) .form-input,
+body:not(.compact-mode) .form-select{font-size:12px !important;padding:8px 10px !important}
+body:not(.compact-mode) .div-selector{grid-template-columns:1fr 1fr !important}
+body:not(.compact-mode) .div-opt{padding:6px 8px;font-size:11px}
+body:not(.compact-mode) .pago-opt{padding:8px;font-size:12px}
+body:not(.compact-mode) .tile-value{font-size:16px}
+body:not(.compact-mode) .split-pct{font-size:18px}
+
+/* En desktop (≥600px) siempre 2 col para forms, 4 para div-selector */
 @media(min-width:600px){
-  .form-grid{grid-template-columns:1fr 1fr}
-  .form-grid .form-group.full{grid-column:1/-1}
-  .div-selector{grid-template-columns:repeat(4,1fr)}
-  .pago-selector{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:1fr 1fr !important}
+  .form-grid .form-group.full{grid-column:1/-1 !important}
+  .div-selector{grid-template-columns:repeat(4,1fr) !important}
+  .split-row{flex-direction:row !important}
 }
-#page-add.desktop-mode .form-grid{grid-template-columns:1fr 1fr !important}
-#page-add.desktop-mode .form-grid .form-group.full{grid-column:1/-1 !important}
 
 /* ── ANNUAL TABLE ── */
 .annual-table{width:100%;border-collapse:collapse;font-size:12px}
@@ -221,6 +240,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <button id="btn-next">›</button>
   </div>
   <div class="topbar-right">
+    <button id="btn-view-toggle" title="Cambiar vista" style="background:var(--bg3);border:1px solid var(--border);border-radius:99px;color:var(--fg2);font-size:11px;font-weight:600;padding:4px 11px;cursor:pointer;font-family:'Montserrat',sans-serif;display:flex;align-items:center;gap:5px;line-height:1">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="toggle-icon"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="7" y1="6" x2="17" y2="6"/><line x1="7" y1="18" x2="17" y2="18"/></svg>
+      <span id="view-label">Compacto</span>
+    </button>
     <div class="sync-dot" id="sync-dot" title="Sincronización"></div>
   </div>
 </div>
@@ -284,21 +307,40 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <canvas id="chart-cat" height="180"></canvas>
   </div>
 
+  <!-- Tabla anual -->
+  <div class="card">
+    <div class="card-title">Resumen anual <span id="res-anual-year" style="color:var(--accent)"></span></div>
+    <div style="overflow-x:auto">
+      <table class="annual-table" id="annual-table">
+        <thead>
+          <tr>
+            <th>Mes</th>
+            <th>Total</th>
+            <th style="color:var(--lu)">Lu pagó</th>
+            <th style="color:var(--ari)">Ari pagó</th>
+            <th>Balance</th>
+          </tr>
+        </thead>
+        <tbody id="annual-tbody">
+          <tr><td colspan="5" style="text-align:center;color:var(--fg3);padding:20px">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 
 <!-- ══════════════════ PAGE: CARGAR ══════════════════ -->
 <div class="page" id="page-add">
 
-  <!-- Vista toggle -->
-  <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-    <button id="btn-view-toggle" style="background:var(--bg2);border:1px solid var(--border);border-radius:99px;color:var(--fg2);font-size:12px;font-weight:600;padding:5px 14px;cursor:pointer;font-family:'Montserrat',sans-serif;display:flex;align-items:center;gap:6px">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" id="toggle-icon"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-      <span id="view-label">Vista desktop</span>
-    </button>
+  <!-- Aviso de mes activo -->
+  <div id="mes-activo-banner" style="display:none;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;color:var(--warn);display:flex;align-items:center;gap:8px">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span id="mes-activo-texto">Estás cargando en <strong></strong></span>
   </div>
 
   <div class="card">
-    <div class="card-title">Nuevo gasto</div>
+    <div class="card-title">Nuevo gasto · <span id="form-mes-label" style="color:var(--accent);font-weight:700"></span></div>
     <form id="form-gasto">
       <div class="form-grid">
         <div class="form-group full">
@@ -657,16 +699,50 @@ document.getElementById('btn-open-liquidar').addEventListener('click', () => {
   document.getElementById('page-liquidar').classList.add('active');
 });
 
+// ═══════════════ BANNER MES ACTIVO ═══════════════
+function updateMesActivoBanner(){
+  const hoy = new Date();
+  const mesHoy = hoy.getMonth() + 1;
+  const yearHoy = hoy.getFullYear();
+  const esMesActual = (currentMonth === mesHoy && currentYear === yearHoy);
+
+  // Label en el título del form
+  document.getElementById('form-mes-label').textContent = MESES[currentMonth-1] + ' ' + currentYear;
+
+  const banner = document.getElementById('mes-activo-banner');
+  if(!esMesActual){
+    banner.style.display = 'flex';
+    document.getElementById('mes-activo-texto').innerHTML =
+      `Estás cargando en <strong style="margin-left:4px">${MESES[currentMonth-1]} ${currentYear}</strong> — no en el mes actual`;
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
 // ═══════════════ MES NAV ═══════════════
 document.getElementById('btn-prev').addEventListener('click', () => {
+  const prevYear = currentYear;
   currentMonth--;
   if(currentMonth < 1){ currentMonth = 12; currentYear--; }
-  updateMesLabel(); resubscribe();
+  updateMesLabel(); updateMesActivoBanner(); resubscribe();
+  if(currentYear !== prevYear) loadTablaAnual();
+  else {
+    document.querySelectorAll('.annual-table tbody tr').forEach((tr,i)=>{
+      tr.classList.toggle('cur-month', i === currentMonth-1);
+    });
+  }
 });
 document.getElementById('btn-next').addEventListener('click', () => {
+  const prevYear = currentYear;
   currentMonth++;
   if(currentMonth > 12){ currentMonth = 1; currentYear++; }
-  updateMesLabel(); resubscribe();
+  updateMesLabel(); updateMesActivoBanner(); resubscribe();
+  if(currentYear !== prevYear) loadTablaAnual();
+  else {
+    document.querySelectorAll('.annual-table tbody tr').forEach((tr,i)=>{
+      tr.classList.toggle('cur-month', i === currentMonth-1);
+    });
+  }
 });
 
 // ═══════════════ SPLIT CALC ═══════════════
@@ -975,12 +1051,16 @@ document.getElementById('form-gasto').addEventListener('submit', async e => {
 });
 
 // ═══════════════ VISTA TOGGLE ═══════════════
+// compact-mode en body → afecta toda la app
+let compactMode = true;
+document.body.classList.add('compact-mode');
+
 document.getElementById('btn-view-toggle').addEventListener('click',()=>{
-  desktopMode = !desktopMode;
-  document.getElementById('page-add').classList.toggle('desktop-mode', desktopMode);
-  document.getElementById('view-label').textContent = desktopMode ? 'Vista celular' : 'Vista desktop';
+  compactMode = !compactMode;
+  document.body.classList.toggle('compact-mode', compactMode);
+  document.getElementById('view-label').textContent = compactMode ? 'Compacto' : '2 col';
   const icon = document.getElementById('toggle-icon');
-  if(desktopMode){
+  if(compactMode){
     icon.innerHTML='<rect x="7" y="2" width="10" height="20" rx="2"/><line x1="7" y1="6" x2="17" y2="6"/><line x1="7" y1="18" x2="17" y2="18"/>';
   } else {
     icon.innerHTML='<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>';
@@ -1224,7 +1304,94 @@ unsubTransfer = db.collection('transferencias').orderBy('ts','desc').limit(50).o
   renderBalance(0,0,0,0); // se recalcula con renderResumen
 }, () => {});
 
+// ═══════════════ TABLA ANUAL ═══════════════
+const MESES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+async function loadTablaAnual(){
+  const year = currentYear;
+  document.getElementById('res-anual-year').textContent = year;
+  const tbody = document.getElementById('annual-tbody');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--fg3);padding:16px">Cargando...</td></tr>';
+
+  const rows = [];
+  let grandTotal=0, grandLu=0, grandAri=0;
+
+  // Precarga ingresos del año para calcular split por mes
+  const promises = [];
+  for(let m=1; m<=12; m++){
+    const mk = `${year}-${String(m).padStart(2,'0')}`;
+    promises.push(
+      Promise.all([
+        db.collection('meses').doc(mk).collection('gastos').get(),
+        db.collection('meses').doc(mk).get()
+      ]).then(([gastosSnap, mesDoc]) => {
+        const gastosArr = gastosSnap.docs.map(d=>({id:d.id,...d.data()}));
+        const mesData = mesDoc.data() || {};
+        const ingLu  = (mesData.lu_ingresos  || []).reduce((s,i)=>s+i.monto,0);
+        const ingAri = (mesData.ari_ingresos || []).reduce((s,i)=>s+i.monto,0);
+        const grand  = ingLu + ingAri;
+        const luFracProp = grand > 0 ? ingLu/grand : 0.5;
+
+        let total=0, luPago=0, ariPago=0, luCorr=0, ariCorr=0;
+        gastosArr.forEach(g => {
+          total += g.monto;
+          if(g.pagador==='lu') luPago += g.monto; else ariPago += g.monto;
+          let lf;
+          switch(g.division){
+            case 'proporcional': lf=luFracProp; break;
+            case '50/50':        lf=0.5; break;
+            case '100lu':        lf=1; break;
+            case '100ari':       lf=0; break;
+            case 'custom':       lf=(g.customPct||50)/100; break;
+            default:             lf=0.5;
+          }
+          luCorr  += g.monto * lf;
+          ariCorr += g.monto * (1-lf);
+        });
+        const balance = luPago - luCorr; // positivo = Ari debe a Lu
+        rows[m-1] = { m, total, luPago, ariPago, balance, hasData: gastosArr.length > 0 };
+        grandTotal += total; grandLu += luPago; grandAri += ariPago;
+      }).catch(()=>{ rows[m-1] = { m, total:0, luPago:0, ariPago:0, balance:0, hasData:false }; })
+    );
+  }
+
+  await Promise.all(promises);
+
+  tbody.innerHTML = '';
+  for(let m=1; m<=12; m++){
+    const r = rows[m-1] || { m, total:0, luPago:0, ariPago:0, balance:0, hasData:false };
+    const isCur = (m === currentMonth && year === currentYear);
+    const tr = document.createElement('tr');
+    if(isCur) tr.className = 'cur-month';
+
+    const balColor = r.balance > 1 ? 'var(--ari)' : r.balance < -1 ? 'var(--lu)' : 'var(--ok)';
+    const balText  = Math.abs(r.balance) < 1 ? '—' : (r.balance > 0 ? '+' : '') + fmt(r.balance);
+
+    tr.innerHTML = `
+      <td>${MESES_CORTO[m-1]}</td>
+      <td>${r.total > 0 ? fmt(r.total) : '—'}</td>
+      <td style="color:var(--lu)">${r.luPago > 0 ? fmt(r.luPago) : '—'}</td>
+      <td style="color:var(--ari)">${r.ariPago > 0 ? fmt(r.ariPago) : '—'}</td>
+      <td style="color:${balColor};font-weight:600">${r.hasData ? balText : '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  // Fila total
+  const trTotal = document.createElement('tr');
+  trTotal.innerHTML = `
+    <td>Total</td>
+    <td>${fmt(grandTotal)}</td>
+    <td style="color:var(--lu)">${fmt(grandLu)}</td>
+    <td style="color:var(--ari)">${fmt(grandAri)}</td>
+    <td>—</td>
+  `;
+  tbody.appendChild(trTotal);
+}
+
 // ═══════════════ INIT ═══════════════
 updateMesLabel();
+updateMesActivoBanner();
 resubscribe();
+loadTablaAnual();
 </script>
