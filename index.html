@@ -5,8 +5,8 @@
 
 <style>
 :root {
-  --bg:#0f1623; --bg2:#1a2235; --bg3:#232e44; --border:#2e3d58;
-  --fg:#eef2f8; --fg2:#8fa3c0; --fg3:#4e6180;
+  --bg:#1a1a1f; --bg2:#242428; --bg3:#2e2e34; --border:#3a3a42;
+  --fg:#eef2f8; --fg2:#9a9aaa; --fg3:#5a5a68;
   --accent:#4fc8a0; --accent2:#2e9e7c;
   --lu:#a78bfa; --ari:#60a5fa;
   --warn:#f59e0b; --danger:#f87171; --ok:#4fc8a0;
@@ -14,12 +14,12 @@
   color-scheme: dark;
 }
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
-  --bg:#f4f7fb;--bg2:#fff;--bg3:#eaf0f8;--border:#d1dce9;
-  --fg:#1a2235;--fg2:#4e6180;--fg3:#8fa3c0;color-scheme:light;
+  --bg:#f2f2f4;--bg2:#fff;--bg3:#e8e8ed;--border:#d0d0d8;
+  --fg:#1a1a1f;--fg2:#5a5a68;--fg3:#9a9aaa;color-scheme:light;
 }}
 :root[data-theme="light"]{
-  --bg:#f4f7fb;--bg2:#fff;--bg3:#eaf0f8;--border:#d1dce9;
-  --fg:#1a2235;--fg2:#4e6180;--fg3:#8fa3c0;color-scheme:light;
+  --bg:#f2f2f4;--bg2:#fff;--bg3:#e8e8ed;--border:#d0d0d8;
+  --fg:#1a1a1f;--fg2:#5a5a68;--fg3:#9a9aaa;color-scheme:light;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:'Montserrat',system-ui,sans-serif;font-weight:300;font-size:15px;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased}
@@ -151,6 +151,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .income-label.lu{color:var(--lu)}
 .income-label.ari{color:var(--ari)}
 
+/* ── DESKTOP FORCED MODE on Cargar ── */
+#page-add.desktop-mode .form-grid{grid-template-columns:1fr 1fr 1fr !important}
+#page-add.desktop-mode .multi-row{grid-template-columns:auto 1fr auto auto auto auto !important}
+#page-add.desktop-mode .multi-row .multi-desc{grid-column:auto !important}
+
 /* ── IMPORT ── */
 .import-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:border-color .15s;margin-bottom:12px}
 .import-zone:hover{border-color:var(--accent)}
@@ -256,7 +261,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <div id="anual-loading" style="text-align:center;padding:20px;color:var(--fg3);font-size:13px">Cargando…</div>
       <div id="anual-content" style="display:none">
         <div class="chart-wrap" style="margin-bottom:16px"><canvas id="chartAnual"></canvas></div>
-        <div style="overflow-x:auto">
+        <div style="overflow-x:auto;padding-bottom:16px">
           <table class="annual-table" id="anual-table"></table>
         </div>
       </div>
@@ -266,6 +271,13 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 <!-- ══════════════ PAGE: CARGAR ══════════════ -->
 <div class="page" id="page-add">
+  <!-- vista toggle -->
+  <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+    <button id="btn-view-toggle" title="Cambiar vista" style="background:var(--bg2);border:1px solid var(--border);border-radius:99px;color:var(--fg2);font-size:12px;font-weight:600;padding:5px 14px;cursor:pointer;font-family:'Montserrat',sans-serif;display:flex;align-items:center;gap:6px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      <span id="view-label">Vista desktop</span>
+    </button>
+  </div>
   <!-- ingresos -->
   <div class="card">
     <div class="card-title">Ingresos del mes</div>
@@ -345,7 +357,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
             <input class="form-input" type="text" id="inp-nota" placeholder="ej: 3 de 12 cuotas">
           </div>
         </div>
-        <button class="btn-primary" type="submit" id="btn-submit">Agregar gasto</button>
+        <button class="btn-primary" type="submit" id="btn-submit">Guardar</button>
       </form>
     </div>
 
@@ -978,6 +990,22 @@ function showToast(msg){
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),2200);
 }
+
+// ── VIEW TOGGLE (Cargar: celular / desktop) ──
+let desktopMode = false;
+document.getElementById('btn-view-toggle').addEventListener('click',()=>{
+  desktopMode = !desktopMode;
+  document.getElementById('page-add').classList.toggle('desktop-mode', desktopMode);
+  document.getElementById('view-label').textContent = desktopMode ? 'Vista celular' : 'Vista desktop';
+  const icon = document.querySelector('#btn-view-toggle svg');
+  if(desktopMode){
+    // phone icon
+    icon.innerHTML='<rect x="7" y="2" width="10" height="20" rx="2"/><line x1="7" y1="6" x2="17" y2="6"/><line x1="7" y1="18" x2="17" y2="18"/>';
+  } else {
+    // monitor icon
+    icon.innerHTML='<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>';
+  }
+});
 
 // ── INIT ──
 updateMonthLabel();
