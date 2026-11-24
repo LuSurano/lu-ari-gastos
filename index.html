@@ -221,6 +221,10 @@ body:not(.compact-mode) .split-pct{font-size:18px}
 .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .section-title{font-size:13px;font-weight:600;color:var(--fg2)}
 
+/* ── VIEW TOGGLE ── */
+.view-toggle-btn{background:none;border:none;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;color:var(--fg3);padding:5px 14px;border-radius:99px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.view-toggle-btn.active{background:var(--bg2);color:var(--fg);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+
 /* ── SEPARADOR ── */
 .sep{height:1px;background:var(--border);margin:16px 0}
 
@@ -250,6 +254,15 @@ body:not(.compact-mode) .split-pct{font-size:18px}
 
 <!-- ══════════════════ PAGE: RESUMEN ══════════════════ -->
 <div class="page active" id="page-resumen">
+
+  <!-- Toggle mensual/anual -->
+  <div style="display:flex;background:var(--bg3);border-radius:99px;padding:3px;margin-bottom:14px;width:fit-content">
+    <button id="res-toggle-mensual" class="view-toggle-btn active" onclick="setResumenView('mensual')">Mensual</button>
+    <button id="res-toggle-anual"   class="view-toggle-btn"        onclick="setResumenView('anual')">Anual</button>
+  </div>
+
+  <!-- VISTA MENSUAL -->
+  <div id="res-view-mensual">
 
   <!-- Balance Splitwise -->
   <div class="balance-banner saldado" id="balance-banner">
@@ -304,12 +317,31 @@ body:not(.compact-mode) .split-pct{font-size:18px}
   <!-- Gráfico categorías -->
   <div class="card">
     <div class="card-title">Por categoría</div>
-    <canvas id="chart-cat" height="180"></canvas>
+    <div style="max-height:220px;position:relative;display:flex;justify-content:center">
+      <canvas id="chart-cat"></canvas>
+    </div>
   </div>
 
-  <!-- Tabla anual -->
+  </div><!-- /res-view-mensual -->
+
+  <!-- VISTA ANUAL -->
+  <div id="res-view-anual" style="display:none">
+
   <div class="card">
-    <div class="card-title">Resumen anual <span id="res-anual-year" style="color:var(--accent)"></span></div>
+    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>Gastos <span id="res-anual-year" style="color:var(--accent)"></span></span>
+      <div style="display:flex;gap:6px;font-size:11px;font-weight:500">
+        <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--lu)"></span>Lu</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--ari)"></span>Ari</span>
+      </div>
+    </div>
+    <div style="position:relative;height:180px">
+      <canvas id="chart-anual"></canvas>
+    </div>
+    <p style="text-align:center;font-size:11px;color:var(--fg3);margin:6px 0 0">Tocá una barra para ver ese mes</p>
+  </div>
+
+  <div class="card">
     <div style="overflow-x:auto">
       <table class="annual-table" id="annual-table">
         <thead>
@@ -327,6 +359,8 @@ body:not(.compact-mode) .split-pct{font-size:18px}
       </table>
     </div>
   </div>
+
+  </div><!-- /res-view-anual -->
 
 </div>
 
@@ -463,6 +497,15 @@ body:not(.compact-mode) .split-pct{font-size:18px}
 <!-- ══════════════════ PAGE: AHORRO ══════════════════ -->
 <div class="page" id="page-ahorro">
 
+  <!-- Toggle mensual/anual -->
+  <div style="display:flex;background:var(--bg3);border-radius:99px;padding:3px;margin-bottom:14px;width:fit-content">
+    <button id="ah-toggle-mensual" class="view-toggle-btn active" onclick="setAhorroView('mensual')">Mensual</button>
+    <button id="ah-toggle-anual"   class="view-toggle-btn"        onclick="setAhorroView('anual')">Anual</button>
+  </div>
+
+  <!-- VISTA MENSUAL -->
+  <div id="ah-view-mensual">
+
   <!-- Acumulado total -->
   <div class="card">
     <div class="card-title">Ahorro acumulado conjunto</div>
@@ -538,6 +581,45 @@ body:not(.compact-mode) .split-pct{font-size:18px}
     <div class="card-title">Aportes del mes</div>
     <div id="ahorro-list"><div class="empty-state" style="padding:20px 0"><p>Sin aportes este mes</p></div></div>
   </div>
+
+  </div><!-- /ah-view-mensual -->
+
+  <!-- VISTA ANUAL AHORRO -->
+  <div id="ah-view-anual" style="display:none">
+
+  <div class="card">
+    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>Ahorro <span id="ah-anual-year" style="color:var(--accent)"></span></span>
+      <div style="display:flex;gap:6px;font-size:11px;font-weight:500">
+        <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--lu)"></span>Lu</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--ari)"></span>Ari</span>
+      </div>
+    </div>
+    <div style="position:relative;height:180px">
+      <canvas id="chart-ahorro-anual"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="overflow-x:auto">
+      <table class="annual-table" id="ahorro-annual-table">
+        <thead>
+          <tr>
+            <th>Mes</th>
+            <th>Total</th>
+            <th style="color:var(--lu)">Lu</th>
+            <th style="color:var(--ari)">Ari</th>
+            <th>Acumulado</th>
+          </tr>
+        </thead>
+        <tbody id="ahorro-annual-tbody">
+          <tr><td colspan="5" style="text-align:center;color:var(--fg3);padding:20px">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  </div><!-- /ah-view-anual -->
 
 </div>
 
@@ -683,20 +765,23 @@ function setSyncDot(state){
 
 // ═══════════════ NAVEGACIÓN ═══════════════
 let desktopMode = false;
+function switchTab(pageId){
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const btn = document.querySelector(`.nav-btn[data-page="${pageId}"]`);
+  if(btn) btn.classList.add('active');
+  const page = document.getElementById('page-' + pageId);
+  if(page) page.classList.add('active');
+}
+
 document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+    switchTab(btn.dataset.page);
   });
 });
 
 document.getElementById('btn-open-liquidar').addEventListener('click', () => {
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelector('[data-page="liquidar"]').classList.add('active');
-  document.getElementById('page-liquidar').classList.add('active');
+  switchTab('liquidar');
 });
 
 // ═══════════════ BANNER MES ACTIVO ═══════════════
@@ -720,29 +805,33 @@ function updateMesActivoBanner(){
 }
 
 // ═══════════════ MES NAV ═══════════════
+function onMonthNav(prevYear){
+  updateMesLabel(); updateMesActivoBanner(); resubscribe();
+  if(currentYear !== prevYear){
+    if(resumenView === 'anual') loadTablaAnual();
+    if(ahorroView  === 'anual') loadAhorroAnual();
+  } else {
+    // Resaltar fila del mes actual en tabla anual
+    document.querySelectorAll('.annual-table tbody tr').forEach((tr,i)=>{
+      tr.classList.toggle('cur-month', i === currentMonth-1);
+    });
+    document.querySelectorAll('#ahorro-annual-tbody tr').forEach((tr,i)=>{
+      tr.classList.toggle('cur-month', i === currentMonth-1);
+    });
+  }
+}
+
 document.getElementById('btn-prev').addEventListener('click', () => {
   const prevYear = currentYear;
   currentMonth--;
   if(currentMonth < 1){ currentMonth = 12; currentYear--; }
-  updateMesLabel(); updateMesActivoBanner(); resubscribe();
-  if(currentYear !== prevYear) loadTablaAnual();
-  else {
-    document.querySelectorAll('.annual-table tbody tr').forEach((tr,i)=>{
-      tr.classList.toggle('cur-month', i === currentMonth-1);
-    });
-  }
+  onMonthNav(prevYear);
 });
 document.getElementById('btn-next').addEventListener('click', () => {
   const prevYear = currentYear;
   currentMonth++;
   if(currentMonth > 12){ currentMonth = 1; currentYear++; }
-  updateMesLabel(); updateMesActivoBanner(); resubscribe();
-  if(currentYear !== prevYear) loadTablaAnual();
-  else {
-    document.querySelectorAll('.annual-table tbody tr').forEach((tr,i)=>{
-      tr.classList.toggle('cur-month', i === currentMonth-1);
-    });
-  }
+  onMonthNav(prevYear);
 });
 
 // ═══════════════ SPLIT CALC ═══════════════
@@ -979,7 +1068,110 @@ function renderCatChart(){
   chartCat = new Chart(ctx, {
     type:'doughnut',
     data:{ labels, datasets:[{ data, backgroundColor:colors.slice(0,labels.length), borderWidth:0 }] },
-    options:{ plugins:{ legend:{ position:'right', labels:{ color:'#9a9aaa', font:{ family:'Montserrat', size:11 }, boxWidth:12, padding:10 } } }, cutout:'65%' }
+    options:{
+      maintainAspectRatio: true,
+      aspectRatio: labels.length > 4 ? 1.8 : 2,
+      plugins:{
+        legend:{ position:'right', labels:{ color:'#9a9aaa', font:{ family:'Montserrat', size:11 }, boxWidth:12, padding:10 } }
+      },
+      cutout:'65%'
+    }
+  });
+}
+
+// ═══════════════ GRÁFICO ANUAL ═══════════════
+let chartAnual = null;
+let annualRows = []; // cache de datos para el chart
+
+function renderChartAnual(rows){
+  annualRows = rows;
+  const ctx = document.getElementById('chart-anual');
+  if(chartAnual) chartAnual.destroy();
+
+  const luData  = rows.map(r => r ? r.luPago  : 0);
+  const ariData = rows.map(r => r ? r.ariPago : 0);
+  const curIdx  = currentMonth - 1;
+
+  chartAnual = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: MESES_CORTO,
+      datasets: [
+        {
+          label: 'Lu pagó',
+          data: luData,
+          backgroundColor: MESES_CORTO.map((_,i) => i===curIdx ? '#c4b5fd' : '#a78bfa'),
+          borderRadius: 4,
+          borderSkipped: false,
+        },
+        {
+          label: 'Ari pagó',
+          data: ariData,
+          backgroundColor: MESES_CORTO.map((_,i) => i===curIdx ? '#93c5fd' : '#60a5fa'),
+          borderRadius: 4,
+          borderSkipped: false,
+        }
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#2e2e34',
+          borderColor: '#3a3a42',
+          borderWidth: 1,
+          titleColor: '#eef2f8',
+          bodyColor: '#9a9aaa',
+          titleFont: { family: 'Montserrat', size: 11, weight: '600' },
+          bodyFont:  { family: 'Montserrat', size: 11 },
+          padding: 10,
+          callbacks: {
+            title: (items) => MESES[items[0].dataIndex],
+            label: (item) => ` ${item.dataset.label}: $${fmt(item.raw)}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          stacked: false,
+          grid: { display: false },
+          border: { display: false },
+          ticks: { color: '#9a9aaa', font: { family: 'Montserrat', size: 10 } }
+        },
+        y: {
+          stacked: false,
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          border: { display: false, dash: [4,4] },
+          ticks: { color: '#9a9aaa', font: { family: 'Montserrat', size: 10 }, callback: v => '$' + (v>=1000 ? (v/1000).toFixed(0)+'k' : v) }
+        }
+      },
+      onClick: (_evt, elements) => {
+        if(elements.length){
+          const idx = elements[0].index; // 0=Ene
+          const mesTarget = idx + 1;
+          // Navegar a ese mes
+          currentMonth = mesTarget;
+          const chartYear = annualRows.find(r=>r && r._year)?._year;
+          if(chartYear) currentYear = chartYear;
+          updateMesLabel();
+          updateMesActivoBanner();
+          resubscribe();
+          // Resaltar mes seleccionado en el chart
+          chartAnual.data.datasets[0].backgroundColor = MESES_CORTO.map((_,i) => i===idx ? '#c4b5fd' : '#a78bfa');
+          chartAnual.data.datasets[1].backgroundColor = MESES_CORTO.map((_,i) => i===idx ? '#93c5fd' : '#60a5fa');
+          chartAnual.update('none');
+          // Marcar fila en tabla
+          document.querySelectorAll('.annual-table tbody tr').forEach((tr,i)=>{
+            tr.classList.toggle('cur-month', i === idx);
+          });
+          // Volver a vista mensual del Resumen para ver el mes seleccionado
+          setResumenView('mensual');
+        }
+      }
+    }
   });
 }
 
@@ -1043,10 +1235,7 @@ document.getElementById('form-gasto').addEventListener('submit', async e => {
     document.getElementById('div-custom-row').style.display='none';
     setSyncDot('ok');
     // ir a resumen
-    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.querySelector('[data-page="resumen"]').classList.add('active');
-    document.getElementById('page-resumen').classList.add('active');
+    switchTab('resumen');
   } catch(err){ setSyncDot('error'); console.error(err); }
 });
 
@@ -1357,6 +1546,14 @@ async function loadTablaAnual(){
 
   await Promise.all(promises);
 
+  // Guardar año en cada fila para el click handler del chart
+  for(let m=1; m<=12; m++){
+    if(rows[m-1]) rows[m-1]._year = year;
+  }
+
+  // Renderizar gráfico anual
+  renderChartAnual(rows);
+
   tbody.innerHTML = '';
   for(let m=1; m<=12; m++){
     const r = rows[m-1] || { m, total:0, luPago:0, ariPago:0, balance:0, hasData:false };
@@ -1389,9 +1586,122 @@ async function loadTablaAnual(){
   tbody.appendChild(trTotal);
 }
 
+// ═══════════════ TOGGLE VISTAS ═══════════════
+let resumenView = 'mensual';
+function setResumenView(v){
+  resumenView = v;
+  document.getElementById('res-view-mensual').style.display = v==='mensual' ? '' : 'none';
+  document.getElementById('res-view-anual').style.display   = v==='anual'   ? '' : 'none';
+  document.getElementById('res-toggle-mensual').classList.toggle('active', v==='mensual');
+  document.getElementById('res-toggle-anual').classList.toggle('active',   v==='anual');
+  if(v==='anual') loadTablaAnual();
+}
+
+let ahorroView = 'mensual';
+function setAhorroView(v){
+  ahorroView = v;
+  document.getElementById('ah-view-mensual').style.display = v==='mensual' ? '' : 'none';
+  document.getElementById('ah-view-anual').style.display   = v==='anual'   ? '' : 'none';
+  document.getElementById('ah-toggle-mensual').classList.toggle('active', v==='mensual');
+  document.getElementById('ah-toggle-anual').classList.toggle('active',   v==='anual');
+  if(v==='anual') loadAhorroAnual();
+}
+
+// ═══════════════ AHORRO ANUAL ═══════════════
+let chartAhorroAnual = null;
+
+async function loadAhorroAnual(){
+  const year = currentYear;
+  document.getElementById('ah-anual-year').textContent = year;
+  const tbody = document.getElementById('ahorro-annual-tbody');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--fg3);padding:16px">Cargando...</td></tr>';
+
+  const rows = [];
+  const promises = [];
+  for(let m=1; m<=12; m++){
+    const mk = `${year}-${String(m).padStart(2,'0')}`;
+    promises.push(
+      db.collection('meses').doc(mk).collection('aportes').get()
+        .then(snap => {
+          const aps = snap.docs.map(d=>d.data());
+          const lu  = aps.filter(a=>a.quien==='lu').reduce((s,a)=>s+a.monto,0);
+          const ari = aps.filter(a=>a.quien==='ari').reduce((s,a)=>s+a.monto,0);
+          rows[m-1] = { m, lu, ari, total: lu+ari };
+        }).catch(()=>{ rows[m-1] = { m, lu:0, ari:0, total:0 }; })
+    );
+  }
+  await Promise.all(promises);
+
+  // Chart
+  if(chartAhorroAnual) chartAhorroAnual.destroy();
+  const ctx = document.getElementById('chart-ahorro-anual');
+  const curIdx = currentMonth - 1;
+  chartAhorroAnual = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: MESES_CORTO,
+      datasets: [
+        {
+          label: 'Lu',
+          data: rows.map(r=>r?r.lu:0),
+          backgroundColor: MESES_CORTO.map((_,i)=> i===curIdx ? '#c4b5fd' : '#a78bfa'),
+          borderRadius: 4, borderSkipped: false,
+        },
+        {
+          label: 'Ari',
+          data: rows.map(r=>r?r.ari:0),
+          backgroundColor: MESES_CORTO.map((_,i)=> i===curIdx ? '#93c5fd' : '#60a5fa'),
+          borderRadius: 4, borderSkipped: false,
+        }
+      ]
+    },
+    options: {
+      maintainAspectRatio: false, responsive: true,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { display:false },
+        tooltip: {
+          backgroundColor:'#2e2e34', borderColor:'#3a3a42', borderWidth:1,
+          titleColor:'#eef2f8', bodyColor:'#9a9aaa',
+          titleFont:{ family:'Montserrat', size:11, weight:'600' },
+          bodyFont:{ family:'Montserrat', size:11 }, padding:10,
+          callbacks: {
+            title: items => MESES[items[0].dataIndex],
+            label: item => ` ${item.dataset.label}: $${fmt(item.raw)}`
+          }
+        }
+      },
+      scales: {
+        x: { stacked:false, grid:{display:false}, border:{display:false}, ticks:{ color:'#9a9aaa', font:{family:'Montserrat',size:10} } },
+        y: { stacked:false, grid:{color:'rgba(255,255,255,0.05)'}, border:{display:false,dash:[4,4]},
+             ticks:{ color:'#9a9aaa', font:{family:'Montserrat',size:10}, callback: v=>'$'+(v>=1000?(v/1000).toFixed(0)+'k':v) } }
+      }
+    }
+  });
+
+  // Tabla
+  tbody.innerHTML = '';
+  let acum = 0;
+  for(let m=1; m<=12; m++){
+    const r = rows[m-1] || {m,lu:0,ari:0,total:0};
+    acum += r.total;
+    const isCur = (m===currentMonth && year===currentYear);
+    const tr = document.createElement('tr');
+    if(isCur) tr.className='cur-month';
+    tr.innerHTML = `
+      <td>${MESES_CORTO[m-1]}</td>
+      <td>${r.total>0?fmt(r.total):'—'}</td>
+      <td style="color:var(--lu)">${r.lu>0?fmt(r.lu):'—'}</td>
+      <td style="color:var(--ari)">${r.ari>0?fmt(r.ari):'—'}</td>
+      <td style="font-weight:600;color:var(--accent)">${acum>0?fmt(acum):'—'}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
 // ═══════════════ INIT ═══════════════
 updateMesLabel();
 updateMesActivoBanner();
 resubscribe();
-loadTablaAnual();
+// La tabla/chart anual se carga cuando el usuario cambia a vista anual
 </script>
